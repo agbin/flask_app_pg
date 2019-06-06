@@ -19,4 +19,12 @@ def list_all():
 
 @app.route("/phone_numbers/<string:phone_number>", methods=["GET"])
 def phone_number_details(phone_number):
-    ...
+    conn = db.pool.getconn()
+    with conn.cursor() as cursor:
+        try:
+            cursor.execute("select * from phone_numbers where phone_number = {}".format(phone_number))
+            return jsonify(cursor.fetchall())
+        except psycopg2.DatabaseError as e:
+            print(e)
+        finally:
+            db.pool.putconn(conn)
