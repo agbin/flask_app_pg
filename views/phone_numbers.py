@@ -4,7 +4,6 @@ from flask_app import app
 import db
 
 
-
 @app.route("/phone_numbers", methods=["GET"])
 def list_all():
     conn = db.pool.getconn()
@@ -17,14 +16,19 @@ def list_all():
         finally:
             db.pool.putconn(conn)
 
+
 @app.route("/phone_numbers/<string:phone_number>", methods=["GET"])
 def phone_number_details(phone_number):
     conn = db.pool.getconn()
     with conn.cursor() as cursor:
         try:
-            cursor.execute("select * from phone_numbers where phone_number = {}".format(phone_number))
-            return jsonify(cursor.fetchall())
+            q = "select * from phone_numbers where phone_number = %s"
+            cursor.execute(q, (phone_number,))
+            return jsonify({
+                "data": cursor.fetchall()
+            })
         except psycopg2.DatabaseError as e:
             print(e)
+            raise e
         finally:
             db.pool.putconn(conn)
