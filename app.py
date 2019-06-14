@@ -1,10 +1,9 @@
 from flask_app import app
-import db
-
 import views.phone_numbers
+import views.accounts
 
 
-db.init_pool(app)
+
 
 
 if __name__ == "__main__":

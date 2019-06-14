@@ -1,11 +1,11 @@
 import flask
-import psycopg2
-from psycopg2.pool import ThreadedConnectionPool
-
+import db
 
 app = flask.Flask(__name__)
 app.config.from_object("config")
 
-connection_pool = ThreadedConnectionPool(app.config["POOL_MINCONN"],
-                                         app.config["POOL_MAXCONN"],
-                                         app.config["PG_DSN"])
+
+db.init_pool(app.config["PG_DSN"],
+             app.config["POOL_MINCONN"],
+             app.config["POOL_MAXCONN"],
+             )
