@@ -25,17 +25,6 @@ def create_account(name, credits, plan):
     return None
 
 
-@app.route('/accounts', methods=['POST'])
-def view_create_account():
-    print(flask.request.json)
-    name = flask.request.json['client_name']
-    credits = flask.request.json['credits']
-    plan = flask.request.json['plan']
-    create_account(name, credits, plan)
-    return flask.jsonify([])
-
-
-@app.route("/accounts/<int:id>", methods=["GET"])
 def account_details(id):
     conn = db.pool.getconn()
     with conn.cursor() as cursor:
@@ -50,3 +39,38 @@ def account_details(id):
             raise e
         finally:
             db.pool.putconn(conn)
+
+
+def account_remove(id):
+    conn = db.pool.getconn()
+    with conn.cursor() as cursor:
+        try:
+            q = "delete from accounts where id = %s"
+            cursor.execute(q, (id,))
+            cursor.connection.commit()
+            return "The account has been removed"
+        except psycopg2.DatabaseError as e:
+            print(e)
+            raise e
+        finally:
+            db.pool.putconn(conn)
+
+
+@app.route('/accounts', methods=['POST'])
+def view_create_account():
+    print(flask.request.json)
+    name = flask.request.json['client_name']
+    credits = flask.request.json['credits']
+    plan = flask.request.json['plan']
+    create_account(name, credits, plan)
+    return flask.jsonify([])
+
+
+@app.route("/accounts/<int:id>", methods=['GET', 'DELETE'])
+def accounts_method(id):
+    if flask.request.method == 'GET':
+        return account_details(id)
+    elif flask.request.method == 'DELETE':
+        return account_remove(id)
+
+

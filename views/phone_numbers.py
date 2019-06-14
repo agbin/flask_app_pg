@@ -1,5 +1,5 @@
 import psycopg2
-from flask import jsonify
+from flask import jsonify, request
 from flask_app import app
 import db
 
@@ -17,7 +17,6 @@ def list_all():
             db.pool.putconn(conn)
 
 
-@app.route("/phone_numbers/<string:phone_number>", methods=["GET"])
 def phone_number_details(phone_number):
     conn = db.pool.getconn()
     with conn.cursor() as cursor:
@@ -32,3 +31,26 @@ def phone_number_details(phone_number):
             raise e
         finally:
             db.pool.putconn(conn)
+
+
+def phone_number_remove(phone_number):
+    conn = db.pool.getconn()
+    with conn.cursor() as cursor:
+        try:
+            q = "delete from phone_numbers where phone_number = %s"
+            cursor.execute(q, (phone_number,))
+            cursor.connection.commit()
+            return "Phone number has been removed"
+        except psycopg2.DatabaseError as e:
+            print(e)
+            raise e
+        finally:
+            db.pool.putconn(conn)
+
+
+@app.route("/phone_numbers/<string:phone_number>", methods=["GET", "DELETE"])
+def phone_method(phone_number):
+    if request.method == 'GET':
+        return phone_number_details(phone_number)
+    elif request.method == 'DELETE':
+        return phone_number_remove(phone_number)
