@@ -56,6 +56,24 @@ def account_remove(id):
             db.pool.putconn(conn)
 
 
+def update_account(name, credits, plan, id):
+    conn = db.pool.getconn()
+    with conn.cursor() as cursor:
+        try:
+            query = 'update accounts set client_name = %s, credits = %s, plan = %s where id = %s returning *'
+            cursor.execute(query, (name, credits, plan, id))
+            cursor.connection.commit()
+            # account = cursor.fetchone()
+            # return account
+            return "ok"
+        except psycopg2.DatabaseError as e:
+            print(e)
+            cursor.connection.rollback()
+        finally:
+            db.pool.putconn(conn)
+    return None
+
+
 @app.route('/accounts', methods=['POST'])
 def view_create_account():
     print(flask.request.json)
@@ -66,11 +84,18 @@ def view_create_account():
     return flask.jsonify([])
 
 
-@app.route("/accounts/<int:id>", methods=['GET', 'DELETE'])
+
+
+@app.route("/accounts/<int:id>", methods=['GET', 'DELETE', 'PATCH'])
 def accounts_method(id):
     if flask.request.method == 'GET':
         return account_details(id)
     elif flask.request.method == 'DELETE':
         return account_remove(id)
+    elif flask.request.method == 'PATCH':
+        name = flask.request.json['client_name']
+        credits = flask.request.json['credits']
+        plan = flask.request.json['plan']
+        return update_account(name, credits, plan, id)
 
 
