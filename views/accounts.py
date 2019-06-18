@@ -2,17 +2,19 @@ import db
 import psycopg2
 from flask_app import app
 import flask
-from flask import json, request
-from flask import jsonify
 import json
-
+from flask import request
+from flask import jsonify
 
 
 def create_account(name, credits, plan):
     conn = db.pool.getconn()
     with conn.cursor() as cursor:
         try:
-            query = 'insert into accounts (client_name, credits, plan) values (%s, %s, %s) returning *'
+            query = (
+                'insert into accounts (client_name, credits, plan)'
+                '  values (%bs, %s, %s) returning *'
+            )
             cursor.execute(query, (name, credits, plan))
             cursor.connection.commit()
             account = cursor.fetchone()
@@ -31,8 +33,7 @@ def account_details(id):
         try:
             q = "select * from accounts where id = %s"
             cursor.execute(q, (id,))
-            record = cursor.fetchone()
-            print(record)
+            record = dict(cursor.fetchone() or {})
             return jsonify({"data": record})
         except psycopg2.DatabaseError as e:
             print(e)
@@ -84,8 +85,6 @@ def view_create_account():
     return flask.jsonify([])
 
 
-
-
 @app.route("/accounts/<int:id>", methods=['GET', 'DELETE', 'PATCH'])
 def accounts_method(id):
     if flask.request.method == 'GET':
@@ -97,5 +96,3 @@ def accounts_method(id):
         credits = flask.request.json['credits']
         plan = flask.request.json['plan']
         return update_account(name, credits, plan, id)
-
-
