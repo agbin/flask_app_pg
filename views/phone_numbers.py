@@ -10,7 +10,7 @@ def list_all():
     with conn.cursor() as cursor:
         try:
             cursor.execute("select * from phone_numbers")
-            return jsonify(cursor.fetchall())
+            return jsonify([dict(r) for r in cursor.fetchall()])
         except psycopg2.DatabaseError as e:
             print(e)
         finally:

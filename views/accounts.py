@@ -29,7 +29,7 @@ def create_account(name, credits, plan):
 
 def account_details(id):
     conn = db.pool.getconn()
-    with conn.cursor(cursor_factory=db.DictCursor) as cursor:
+    with conn.cursor() as cursor:
         try:
             q = "select * from accounts where id = %s"
             cursor.execute(q, (id,))
