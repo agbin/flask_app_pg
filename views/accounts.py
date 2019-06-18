@@ -27,13 +27,13 @@ def create_account(name, credits, plan):
 
 def account_details(id):
     conn = db.pool.getconn()
-    with conn.cursor() as cursor:
+    with conn.cursor(cursor_factory=db.DictCursor) as cursor:
         try:
             q = "select * from accounts where id = %s"
             cursor.execute(q, (id,))
-            return jsonify({
-                "data": str(cursor.fetchall())
-            })
+            record = cursor.fetchone()
+            print(record)
+            return jsonify({"data": record})
         except psycopg2.DatabaseError as e:
             print(e)
             raise e
