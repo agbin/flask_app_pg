@@ -2,8 +2,6 @@ import db
 import psycopg2
 from flask_app import app
 import flask
-import json
-from flask import request
 from flask import jsonify
 
 
@@ -34,7 +32,7 @@ def account_details(id):
             q = "select * from accounts where id = %s"
             cursor.execute(q, (id,))
             record = dict(cursor.fetchone() or {})
-            return jsonify({"data": record})
+            return record
         except psycopg2.DatabaseError as e:
             print(e)
             raise e
@@ -63,10 +61,12 @@ def update_account(name, credits, plan, id):
         try:
             query = 'update accounts set client_name = %s, credits = %s, plan = %s where id = %s returning *'
             cursor.execute(query, (name, credits, plan, id))
+            account = cursor.fetchone()
+            if not account:
+                flask.abort(404)
             cursor.connection.commit()
-            # account = cursor.fetchone()
-            # return account
-            return "ok"
+            return jsonify(dict(account))
+
         except psycopg2.DatabaseError as e:
             print(e)
             cursor.connection.rollback()
@@ -81,18 +81,23 @@ def view_create_account():
     name = flask.request.json['client_name']
     credits = flask.request.json['credits']
     plan = flask.request.json['plan']
-    create_account(name, credits, plan)
-    return flask.jsonify([])
+    account = create_account(name, credits, plan)
+    return flask.jsonify(account)
 
 
-@app.route("/accounts/<int:id>", methods=['GET', 'DELETE', 'PATCH'])
-def accounts_method(id):
-    if flask.request.method == 'GET':
-        return account_details(id)
-    elif flask.request.method == 'DELETE':
-        return account_remove(id)
-    elif flask.request.method == 'PATCH':
-        name = flask.request.json['client_name']
-        credits = flask.request.json['credits']
-        plan = flask.request.json['plan']
-        return update_account(name, credits, plan, id)
+@app.route("/accounts/<int:id>", methods=['GET'])
+def view_show_account(id):
+    return jsonify({'data': account_details(id)})
+
+
+@app.route("/accounts/<int:id>", methods=['DELETE'])
+def view_remove_account(id):
+    return account_remove(id)
+
+
+@app.route("/accounts/<int:id>", methods=['PATCH'])
+def view_modify_account(id):
+    name = flask.request.json['client_name']
+    credits = flask.request.json['credits']
+    plan = flask.request.json['plan']
+    return update_account(name, credits, plan, id)
